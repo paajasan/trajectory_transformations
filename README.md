@@ -1,29 +1,36 @@
-# README #
+# Trajectory transformations #
 
-This README would normally document whatever steps are necessary to get your application up and running.
 
-### What is this repository for? ###
+## What? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+Trajectory [on-the-fly](https://www.mdanalysis.org/2020/03/09/on-the-fly-transformations/) transformations for MDAnalysis
 
-### How do I get set up? ###
+### unwrap ####
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+Makes "fragments" whole over the PBC. Fragments are groups of bonded atoms in the selection. If the molecules are continuous in the selection, these are the same as molecules.
 
-### Contribution guidelines ###
+### wrap ####
 
-* Writing tests
-* Code review
-* Other guidelines
+Put fragment COM back into the box.
 
-### Who do I talk to? ###
+### center and/or superposition ####
 
-* Repo owner or admin
-* Other community or team contact
+Centres the selection COM to (0,0,0) and optionally does a rotational superposition onto the reference.
+
+## Why? ###
+
+The built-in unwrap method was super slow.
+
+## How? ###
+
+
+### unwrap ####
+
+Basically as a setup does a DFS on the graph of bonded atoms to save bond information. Then for each frame makes these bonds unbroken over the PBC.
+
+### wrap ####
+
+Uses same search as before to find "fragments": groups of bonded atoms. If The selection is continuous, these are the same as molecules.
+
+## Usage ##
+TODO
