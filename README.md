@@ -34,3 +34,9 @@ Uses same search as before to find "fragments": groups of bonded atoms. If The s
 
 ## Usage ##
 TODO
+
+
+## Requirements ###
+
+1. MDAnalysis
+1. Numba
