@@ -66,13 +66,21 @@ Then we add it to the trajectory with
 u.trajectory.add_transformations(unwrap)
 ```
 
+Now you can iterate over the trajectory just as you would normally
+
+
+```
+for ts in u.trajectory:
+    # Do something with transformed positions
+```
+
 **Optionally**, it can be called on each timestep of the trajectory when iterating it as
 
 ```
 for ts in u.trajectory:
     # Do something with positions before transformation
     ts = unwrap(ts)
-    # Do something with positions after transformation
+    # Do something with transformed positions
 ```
 
 In that case the positions can also be accessed before the transformation.
