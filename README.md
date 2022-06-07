@@ -19,7 +19,7 @@ Centres the selection COM to reference COM and optionally does a rotational supe
 
 ## Why? ###
 
-The built-in unwrap method was super slow.
+The built-in unwrap method was super slow. With one system the built-in method took ~8 minutes, while our method took 2.6 s to do transform the same frames. This was only 0.6 s overhead compared to iterating the frames without transformation.
 
 ## How? ###
 
@@ -92,5 +92,12 @@ All three transformations work with the same principle.
 
 ## Requirements ###
 
-1. MDAnalysis
-1. Numba
+1. Python 3 with NumPy
+1. [MDAnalysis](https://docs.mdanalysis.org/stable/index.html)
+1. [Numba](https://numba.pydata.org/)
+
+If you have conda, you can make sure all dependencies are met by running
+
+```
+conda install -c conda-forge numpy numba mdanalysis
+```
