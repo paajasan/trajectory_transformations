@@ -49,3 +49,17 @@ Thumbs.db
 *.mov
 *.wmv
 
+# builds
+build
+transformations.egg-info
+
+# cython
+*.c
+*.so
+*.cpp
+# cython annotations
+_ctransformations.html
+
+# test output
+tests/*.xtc
+rsc/.*.xtc_offsets.npz
