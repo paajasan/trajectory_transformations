@@ -2,16 +2,20 @@ import cython
 import numpy as np
 cimport numpy as np
 import warnings
+
 from libcpp.unordered_set cimport unordered_set as cunset
 from libcpp.unordered_map cimport unordered_map as cunmap
 from libcpp.map cimport map as cmap
 from libcpp.stack cimport stack as cstack
 from libcpp.vector cimport vector as cvector
+
 from cython.operator cimport dereference
+from cython.parallel import prange
 
 """
 This module includes functions to make on the fly transformations for MDAnalysis trajectories
 """
+
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
@@ -162,5 +166,34 @@ def traverse_mol(np.intp_t[:] ag, int[:,:] bond_ind, np.intp_t[:] starters):
         return np.zeros((0,2),dtype=int)
     return np.array(bonds)
 
+
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
+def iterate_bonds(double[:,:] pos, np.intp_t[:,:] bonds):
+    """
+    Fixes molecules whole over pbc.
+    Parameters:
+        pos:   Positions in reciprocal space float[n,d].
+        bonds: array of atom indices corresponding to bonds.
+               The second one will be fixed. int[m,2].
+    Returns:
+        Fixed positions in reciprocal space. float[n,d].
+    """
+    cdef int    i,j, a1, a2
+    cdef double diff
+    # Iterate over bonds
+    for i in range(bonds.shape[0]):
+        a1 = bonds[i,0]
+        a2 = bonds[i,1]
+        for j in range(pos.shape[1]):
+            # Difference vector
+            diff = pos[a2,j]-pos[a1,j]
+            # If distance is more than half box vector, translate by box vector (1.0)
+            if(diff<-0.5):
+                pos[a2,j] += 1.0
+            if(diff>0.5):
+                pos[a2,j] -= 1.0
+    # Return fixed coordinates
+    return pos
 
 

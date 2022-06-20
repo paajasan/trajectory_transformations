@@ -62,4 +62,5 @@ _ctransformations.html
 
 # test output
 tests/*.xtc
+tests/output_trjconv.txt
 rsc/.*.xtc_offsets.npz

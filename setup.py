@@ -28,5 +28,5 @@ setup(
     packages=["transformations"],
     author='Santeri Paajanen',
     author_email='santeri.e.paajanen@helsinki.fi',
-    ext_modules = cythonize(extension)
+    ext_modules = cythonize(extension, language_level = "3")
 )

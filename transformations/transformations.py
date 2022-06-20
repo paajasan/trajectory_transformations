@@ -2,37 +2,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from MDAnalysis.analysis import align
-from numba import njit
 
 from . import _ctransformations
 
 """
 This module includes functions to make on the fly transformations for MDAnalysis trajectories
 """
-
-
-@njit(["f8[:,:](f8[:,:],i8[:,:])",
-      "f4[:,:](f4[:,:],i8[:,:])"])
-def _iterate_bonds(pos, bonds):
-    """
-    Fixes molecules whole over pbc.
-    Parameters:
-        pos:   Positions in reciprocal space float[n,d].
-        bonds: array of atom indices corresponding to bonds.
-               The second one will be fixed. int[m,2].
-    Returns:
-        Fixed positions in reciprocal space. float[n,d].
-    """
-    # Iterate over bonds
-    for atoms in bonds:
-        a1 = atoms[0]
-        a2 = atoms[1]
-        # Difference vector
-        diff_v = pos[a2]-pos[a1]
-        # If distance is more than half box vector, translate by box vector (1.0)
-        pos[a2] -= (np.abs(diff_v)>0.5)*np.sign(diff_v)
-    # Return fixed coordinates
-    return pos
 
 
 def make_whole(ts, bonds, sel):
@@ -43,11 +18,11 @@ def make_whole(ts, bonds, sel):
     """
     box = ts.triclinic_dimensions
     # Inverse box
-    invbox = np.linalg.inv(box)
+    invbox = np.linalg.inv(box.astype(np.float64))
     # Transfer coordinates to unit cell and put in box
-    unitpos = (ts.positions[sel] @ invbox) % 1
+    unitpos = (ts.positions[sel].astype(np.float64) @ invbox) % 1
     # Fix box in reciprocal space
-    unitpos = _iterate_bonds(unitpos, bonds)
+    unitpos = _ctransformations.iterate_bonds(unitpos, bonds)
 
     ts.positions[sel] = unitpos @ box
 
