@@ -9,9 +9,16 @@ import numpy as np
 import MDAnalysis as mda
 import subprocess as subp
 import os
+import pstats, cProfile
 
 def notransform(ts):
     return ts
+
+class NoTransform():
+    def __init__(self,sel):
+        pass
+    def __call__(self,ts):
+        return ts
 
 def write_transform(sel,transform):
     with mda.Writer("tmp.xtc", sel.n_atoms) as writer:
@@ -29,18 +36,51 @@ def write_traj(struct, traj, selstr="all", trajout="tmp.xtc", transform=transfor
             writer.write(sel.atoms)
 
 
-def write_trjconv(struct, traj, *args, select=b"0\n", trajout="tmp.xtc", **kwargs):
+def write_trjconv(struct, traj, *args, input=b"0\n", trajout="tmp.xtc", **kwargs):
     command = ["gmx", "trjconv", "-f", traj, "-s", struct] + \
               ["-"+a for a in args]
     for k in kwargs:
         command += ["-"+k, kwargs[k]]
 
     with open("output_trjconv.txt", "w") as fout:
-        compProc = subp.run(command, stdout=fout, stderr=subp.STDOUT, input=select)
+        compProc = subp.run(command, stdout=fout, stderr=subp.STDOUT, input=input)
 
+
+
+cProfile.run('write_traj("../rsc/struct.tpr","../rsc/traj.xtc", transform=transformations.MolWrapper)', "profile.prof")
+
+s = pstats.Stats("profile.prof")
+s.strip_dirs().sort_stats("time").print_stats("transformations")
+
+
+cProfile.run('write_traj("../rsc/struct.tpr","../rsc/traj.xtc")', "profile.prof")
+
+
+s = pstats.Stats("profile.prof")
+s.strip_dirs().sort_stats("time").print_stats("transformations")
+
+quit()
+
+print("Make whole protein")
+u = mda.Universe("../rsc/struct.tpr","../rsc/traj.xtc")
+sel = u.select_atoms("protein")
+u.atoms.positions += (50,-50,-50)
+transform_cyt = transformations.Unwrapper(sel)
+transform_num = numba_transform.Unwrapper(sel)
+p_orig = u.atoms.positions.copy()
+transform_cyt(u.trajectory[0])
+cyt_pos = u.atoms.positions.copy()
+u.atoms.positions = p_orig
+transform_num(u.trajectory[0])
+num_pos = u.atoms.positions
+print(np.all((num_pos-cyt_pos)<1e-4))
+print(np.max(np.linalg.norm(num_pos-cyt_pos, axis=-1)))
 
 rep = 1
 num = 1
+write_trjconv("../rsc/struct.tpr","../rsc/traj.xtc", "nobackup",pbc="whole",ur="tric")
+print()
+print(np.min(timeit.repeat(lambda: write_traj("../rsc/struct.tpr","../rsc/traj.xtc", transform=NoTransform), number =num, repeat=rep))/num)
 print(np.min(timeit.repeat(lambda: write_traj("../rsc/struct.tpr","../rsc/traj.xtc"), number =num, repeat=rep))/num)
 print(np.min(timeit.repeat(lambda: write_trjconv("../rsc/struct.tpr","../rsc/traj.xtc", "nobackup",pbc="whole",ur="tric"), number =num, repeat=rep))/num)
 
@@ -77,7 +117,7 @@ transform = transformations.Unwrapper(sel)
 print(np.min(timeit.repeat(lambda: write_transform(sel, transform), number =num, repeat=rep))/num)
 
 
-
+#quit()
 
 print("-------------- UnWrapper ------------------------")
 
@@ -104,7 +144,7 @@ print("-------------- MolWrapper -----------------------")
 u = mda.Universe("../rsc/struct.tpr","../rsc/struct.gro")
 sel = u.select_atoms("protein")
 
-frags1 = transformations.MolWrapper(sel).mols
+frags1 = transformations.MolWrapper(sel).get_frags()
 frags1 = [np.sort(frags1[i]) for i in np.argsort([a[0] for a in frags1])]
 frags2 = numba_transform.MolWrapper(sel).mols
 frags2 = [np.sort(frags2[i]) for i in np.argsort([a[0] for a in frags2])]
@@ -134,6 +174,7 @@ print("Python    ", timeit.timeit(lambda: numba_transform.MolWrapper(sel), numbe
 
 print("-------------- Timings -----------------------")
 
+quit()
 
 rep = 5
 num = 10

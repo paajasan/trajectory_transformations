@@ -54,13 +54,15 @@ build
 transformations.egg-info
 
 # cython
-*.c
+_ctransformations.c
 *.so
-*.cpp
+_ctransformations.cpp
 # cython annotations
 _ctransformations.html
 
 # test output
 tests/*.xtc
 tests/output_trjconv.txt
+tests/profile.prof
 rsc/.*.xtc_offsets.npz
+rsc/.*.xtc_offsets.lock

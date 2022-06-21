@@ -11,20 +11,8 @@ This module includes functions to make on the fly transformations for MDAnalysis
 
 
 def make_whole(ts, bonds, sel):
-    """ Makes molecules in sel whole using bond info from bonds.
-        Coordinates are first switched to reciprocal space, then passed to
-        _iterate_bonds to actually make them whole. The fixed positions are
-        switched back to normal space and set as the current positions for sel.
-    """
     box = ts.triclinic_dimensions
-    # Inverse box
-    invbox = np.linalg.inv(box.astype(np.float64))
-    # Transfer coordinates to unit cell and put in box
-    unitpos = (ts.positions[sel].astype(np.float64) @ invbox) % 1
-    # Fix box in reciprocal space
-    unitpos = _ctransformations.iterate_bonds(unitpos, bonds)
-
-    ts.positions[sel] = unitpos @ box
+    ts.positions[sel] = _ctransformations.make_whole(ts.positions[sel], bonds,box)
 
     return ts
 
@@ -49,13 +37,15 @@ class Unwrapper:
         self.sel = ag.indices
         self.bonds = _ctransformations.traverse_mol(
                             self.sel,
-                            ag.bonds.to_indices(),
+                            ag.universe.bonds.to_indices(),
                             np.array([s.index for s in starters],dtype=int)
                         )
         self.sel = ag.indices
 
     def __call__(self, ts):
-        return make_whole(ts, self.bonds, self.sel)
+        box = ts.triclinic_dimensions
+        ts.positions[self.sel] = _ctransformations.make_whole(ts.positions[self.sel], self.bonds,box)
+        return ts
 
 
 
@@ -70,25 +60,31 @@ class MolWrapper:
     """
     def __init__(self,ag):
         self.selection = ag.indices
-        self.mols = []
-        self.weights = []
-        for frag in _ctransformations.find_frags(ag.indices, ag.bonds.to_indices()):
-            self.mols.append(frag)
-            self.weights.append(ag.universe.atoms[frag].masses)
+        self.weights = ag.masses.astype(ag.positions.dtype)
+        self.mols, self.nmols = _ctransformations.find_frags(
+                                        self.selection,
+                                        ag.universe.bonds.to_indices()
+                                    )
+        
+        assert not np.any(np.array(self.mols)<0), "FFuuuu, %d"%np.sum(np.array(self.mols)<0)
+        assert not np.any(np.array(self.mols)>=self.nmols), "FFuuuu2, %d, %d"%(np.sum(np.array(self.mols)>=self.nmols,self.nmols))
 
-        self.totw = np.array([np.sum(w) for w in self.weights])
+
+    def get_frags(self):
+        mols = []
+        for i in range(self.nmols):
+            mols.append(self.selection[np.array(self.mols)==i])
+        return mols
 
     def __call__(self,ts):
         box = ts.triclinic_dimensions
-        # Inverse box
-        invbox = np.linalg.inv(box)
-        for i,m in enumerate(self.mols):
-            pos = np.sum(self.weights[i]*ts.positions[m].T,axis=-1)/self.totw[i]
-            # Transfer coordinates to unit cell and put in box
-            unitpos = (pos @ invbox) % 1
-            newpos = unitpos @ box
-            trans = newpos-pos
-            ts.positions[m] += trans
+        ts.positions[self.selection] = _ctransformations.wrap_mols(
+                                                ts.positions[self.selection],
+                                                self.weights,
+                                                self.mols,
+                                                self.nmols,
+                                                box
+                                            )
         return ts
 
 
