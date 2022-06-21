@@ -47,17 +47,17 @@ def write_trjconv(struct, traj, *args, input=b"0\n", trajout="tmp.xtc", **kwargs
 
 
 
-cProfile.run('write_traj("../rsc/struct.tpr","../rsc/traj.xtc", transform=transformations.MolWrapper)', "profile.prof")
+#cProfile.run('write_traj("../rsc/struct.tpr","../rsc/traj.xtc", transform=transformations.MolWrapper)', "profile.prof")
 
-s = pstats.Stats("profile.prof")
-s.strip_dirs().sort_stats("time").print_stats("transformations")
-
-
-cProfile.run('write_traj("../rsc/struct.tpr","../rsc/traj.xtc")', "profile.prof")
+#s = pstats.Stats("profile.prof")
+#s.strip_dirs().sort_stats("time").print_stats("transformations")
 
 
-s = pstats.Stats("profile.prof")
-s.strip_dirs().sort_stats("time").print_stats("transformations")
+#cProfile.run('write_traj("../rsc/struct.tpr","../rsc/traj.xtc")', "profile.prof")
+
+
+#s = pstats.Stats("profile.prof")
+#s.strip_dirs().sort_stats("time").print_stats("transformations")
 
 quit()
 
