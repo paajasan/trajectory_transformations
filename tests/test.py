@@ -1,6 +1,4 @@
 import sys
-sys.path.append("../")
-
 import transformations
 print(transformations.__file__)
 import numba_transform
