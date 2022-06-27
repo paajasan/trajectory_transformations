@@ -6,16 +6,11 @@ import warnings
 
 from libcpp.unordered_set cimport unordered_set as cunset
 from libcpp.unordered_map cimport unordered_map as cunmap
-from libcpp.map cimport map as cmap
 from libcpp.stack cimport stack as cstack
 from libcpp.vector cimport vector as cvector
 
-from libc.math cimport floor as cfloor
-
+from cython          cimport floating 
 from cython.operator cimport dereference
-from cython.parallel cimport  prange
-from cython          cimport  floating 
-from cython.view     cimport  array
 
 """
 This module includes functions to make on the fly transformations for MDAnalysis trajectories
