@@ -1,7 +1,9 @@
 import sys
-import transformations
+import trajectory_transformations as transformations
+sys.path.insert(0,"../")
+import transformations_numba as numba_transform
 print(transformations.__file__)
-import numba_transform
+print(numba_transform.__file__)
 import timeit
 import numpy as np
 import MDAnalysis as mda
@@ -57,7 +59,6 @@ def write_trjconv(struct, traj, *args, input=b"0\n", trajout="tmp.xtc", **kwargs
 #s = pstats.Stats("profile.prof")
 #s.strip_dirs().sort_stats("time").print_stats("transformations")
 
-quit()
 
 print("Make whole protein")
 u = mda.Universe("../rsc/struct.tpr","../rsc/traj.xtc")
@@ -172,7 +173,7 @@ print("Python    ", timeit.timeit(lambda: numba_transform.MolWrapper(sel), numbe
 
 print("-------------- Timings -----------------------")
 
-quit()
+#quit()
 
 rep = 5
 num = 10

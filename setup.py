@@ -5,7 +5,7 @@ from Cython.Build    import cythonize
 
 #CCoptions.annotate = True
 
-extension = Extension("transformations._ctransformations",
+extension = Extension("trajectory_transformations._ctransformations",
                       sources=["lib/_ctransformations.pyx"],
                       include_dirs=[numpy.get_include()],
                       extra_compile_args=["-O3"],
@@ -14,6 +14,7 @@ extension = Extension("transformations._ctransformations",
 
 
 setup(
-    packages=["transformations"],
+    packages    = ["trajectory_transformations"],
+    package_dir = {"trajectory_transformations": "src"},
     ext_modules = cythonize(extension, language_level = "3")
 )

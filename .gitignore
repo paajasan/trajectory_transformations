@@ -51,7 +51,7 @@ Thumbs.db
 
 # builds
 build
-transformations.egg-info
+*.egg-info
 
 # cython
 _ctransformations.c
