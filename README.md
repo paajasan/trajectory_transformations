@@ -7,7 +7,7 @@
 
 ### Numba vs cython ###
 
-The project has two version of the same tools. The numba-accelerated one is a bit slower in iteration and a lot slower in setup than the cython accelerated one, but does not need to be built. If you plan on transforming whole systems (inluding all waters), I seriously suggest using the cython version. With samll proteins without hydrogens the differences become smaller.
+The project has two version of the same tools. The numba-accelerated one is a bit slower in iteration and a lot slower in setup than the cython accelerated one, but does not need to be built. If you plan on transforming whole systems (inluding all waters), I seriously suggest using the cython version. With small proteins without hydrogens the differences less noticeable.
 
 ### unwrap ####
 
