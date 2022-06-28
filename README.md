@@ -3,7 +3,7 @@
 
 ## What? ###
 
-Trajectory [on-the-fly](https://www.mdanalysis.org/2020/03/09/on-the-fly-transformations/) transformations for MDAnalysis
+[On-the-fly](https://www.mdanalysis.org/2020/03/09/on-the-fly-transformations/) transformations for MDAnalysis trajectories.
 
 ### Numba vs cython ###
 
@@ -23,7 +23,7 @@ Centres the selection COM to reference COM and optionally does a rotational supe
 
 ## Why? ###
 
-The built-in unwrap method was super slow. With one system the built-in method took ~8 minutes, while our method took 2.6 s to do transform the same frames. This was only 0.6 s overhead compared to iterating the frames without transformation.
+The built-in unwrap method was super slow. With one system the built-in method took ~8 minutes, while our method took 2.6 s to transform the same frames. This was only 0.6 s overhead compared to iterating the frames without transformation.
 
 **Note**: there is a [pull request](https://github.com/MDAnalysis/mdanalysis/pull/3169#issue-831915405) for MDAnaysis, that should make its transformations faster by many orders of magnitude. This project will most likely still be faster for large systems, but of course by a smaller margin than currently.
 
@@ -32,28 +32,44 @@ The built-in unwrap method was super slow. With one system the built-in method t
 
 ### unwrap ####
 
-Basically as a setup does a DFS on the graph of bonded atoms to save bond information. Then for each frame makes these bonds unbroken over the PBC.
+As a setup does a Depth-First-Search (DFS) on the graph of bonded atoms to gather bond information. Then for each frame makes these bonds unbroken over the PBC, in the order they came up in the search.
 
 ### wrap ####
 
-Uses same search as before to find "fragments": groups of bonded atoms. If The selection is continuous, these are the same as molecules.
+As before, uses DFS to find "fragments" (groups of bonded atoms). If the selection is continuous, these are the same as molecules.
 
 ### superpositioning ####
 
 Centering by simply translating, so that COM is in (0,0,0), after it supersitioning with `MDAnalysis.analysis.align.rotation_matrix` to get optimal rotation matrix. Finally translates by refrerence COM.
 
+
+
+
+## Requirements ###
+
+1. Python 3 with NumPy
+1. [MDAnalysis](https://docs.mdanalysis.org/stable/index.html)
+1. [Numba](https://numba.pydata.org/) (only for the numba-accelerated case)
+
+If you have conda, you can make sure all dependencies are met by running
+
+```
+conda install -c conda-forge numpy numba mdanalysis
+```
+
+
 ## Installation ##
 
-### Simple numba accelerated ###
+### Simple (numba accelerated) ###
 
 Simply, copy the `transformations_numba.py` from the project root to  the current directory (or anywhere in the PYTHONPATH). 
 
-The transformations can then be imoprted with
+The transformations can then be imported with
 ```
 from transformations_numba import Unwrapper, Wrapper, Superpos
 ```
 
-### Cython accelerated ###
+### Slightly less simple (cython accelerated) ###
 
 This way the project will be installed as a package, so make sure you have the correct environment activated. **Optional**: If you use conda, you can make a new environment with the requirements installed with
 
@@ -73,7 +89,7 @@ pip uninstall trajectory_transformations
 ```
 
 
-The transformations can then be imoprted with
+The transformations can then be imported with
 ```
 from trajectory_transformations import Unwrapper, Wrapper, Superpos
 ```
@@ -124,18 +140,3 @@ for ts in u.trajectory:
 In that case the positions can also be accessed before the transformation.
 
 All three transformations work with the same principle.
-
-
-
-
-## Requirements ###
-
-1. Python 3 with NumPy
-1. [MDAnalysis](https://docs.mdanalysis.org/stable/index.html)
-1. [Numba](https://numba.pydata.org/) (only for the numba-accelerated case)
-
-If you have conda, you can make sure all dependencies are met by running
-
-```
-conda install -c conda-forge numpy numba mdanalysis
-```
