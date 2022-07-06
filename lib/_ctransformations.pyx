@@ -340,7 +340,7 @@ def wrap_mols(floating[:,:] pos, floating[:] weights, int[:] mols, int nmols, fl
 
     for i in range(pos.shape[0]):
         for j in range(3):
-            pos[i,m] += moltrans[mols[i],m]
+            pos[i,j] += moltrans[mols[i],j]
 
 
     return pos
