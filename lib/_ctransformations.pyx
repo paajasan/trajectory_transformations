@@ -326,10 +326,10 @@ def wrap_mols(floating[:,:] pos, floating[:] weights, int[:] mols, int nmols, fl
             for k in range(3):
                 tmp[m] += molcoms[i,k]*invbox[k,m]
             oint = int(tmp[m])
-            if(oint!=0):
+            if(oint!=0 or tmp[m]<0):
                 mv=True
                 tmp[m] -= oint
-                if(oint<0):
+                if(tmp[m]<0):
                     tmp[m] += 1.0
 
         if(mv):
