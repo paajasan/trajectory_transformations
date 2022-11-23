@@ -74,6 +74,62 @@ def _matmul3D(floating[:,:] A, floating[:,:] B, bint modulo=False):
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
+def bond_unbonded(np.intp_t[:] ag, int[:,:] bond_ind, int[:] resids):
+    """
+    Finds atoms that are a part of an residue with other atoms, but do not have any bonds. Makes bonds to connects
+    these to any non-virtual site within the residue.
+    Parameters:
+        ag:         shape(n_sel,) array of indices in the atom group to add virtual sites from
+        bond_ind:   shape(nb,2) array of the nb existing bonds, including all bonds to and from the atom group.
+        resids:     shape(n,) array of resids for each of the n atoms in the system.
+    Returns:
+        newbonds:   shape(m,2) numpy array of new bonds, which connect unbonded atoms to any atom with the same resid.
+    """
+    cdef cunmap[int,cvector[int]] residmap
+    cdef cunset[int]              hasbonds
+    cdef int                      i,v
+    cdef cunset[int]              virts
+    cdef int[:,:]                 newbonds
+    
+    # Make a map of the residues to easily find them when needed
+    # This is done for the whole system
+    for i in range(resids.shape[0]):
+        residmap[resids[i]].push_back(i)
+    
+    # Make a set of which atoms have bonds:
+    for i in range(ag.shape[0]):
+        hasbonds.insert(bond_ind[i,0])
+        hasbonds.insert(bond_ind[i,1])
+
+    for i in range(resids.shape[0]):
+        # If the atom has no bonds, but its residue is larger than one, save the index
+        if(hasbonds.count(i)==0 and residmap[resids[i]].size()>1):
+            virts.insert(i)
+    
+    newbonds = np.empty((virts.size(),2),dtype=int)
+
+    i=-1
+    for v in virts:
+        i+=1
+        for a in residmap[resids[i]]:
+            if(a==v):
+                # If this is the same atom, just continue
+                continue
+
+            # Set the bond
+            newbonds[i,0] = v
+            newbonds[i,1] = a
+            
+            # If this is a virtual site, continue until a non virtual site is found, else we break
+            if(not virts.count(a)):
+                break
+    
+    return newbonds
+    
+
+
+@cython.boundscheck(False) # turn off bounds-checking for entire function
+@cython.wraparound(False)  # turn off negative index wrapping for entire function
 def find_frags(np.intp_t[:] ag, int[:,:] bond_ind):
     """ Traverse all molecules that atoms in ag are part of.
         Parameters:

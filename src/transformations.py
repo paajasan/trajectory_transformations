@@ -26,20 +26,34 @@ class Unwrapper:
         They will be put into the box if they are outside and each consecutive
         bonded atom will be moved by a box vector if it is more than half the
         length of the box.
+            Virts can help with virtual sites, as MDAnalysis does not return their
+        connections as bonds. A new bond is made to a random atom in the residue,
+        so as long as any single residue is not larger than half the bob vector in
+        any direction, this should work just fine. If it doesn't, you can manually
+        add bonds to each virtual site before calling this initialiser. 
         parameters:
             ag:       Atom group of molecules to make whole
             starters: Atom goup (or list) of atoms that are guaranteed to stay
                       in box. If multiple atoms are part of same molecule, only
                       first is guaranteed.
+            virts:    Boolean of whether to search manually for virtual sites and
+                      to connect them. Virtual sites are assumed to be any atom that
+                      is in a residue with more than one atom, but has no bonds. Bonds
+                      are added first to any non-virtual atom in the residue, or if not
+                      found, to any virtual atom.
         returns:
             transformation function
     """
 
-    def __init__(self, ag, starters=[]):
+    def __init__(self, ag, starters=[], virts=False):
         self.sel = ag.indices
+        bond_ind = ag.universe.bonds.to_indices()
+        if (virts):
+            newbonds = _ctransformations(self.sel, bond_ind, ag.resindices)
+            bond_ind = np.concatenate(bond_ind, newbonds)
         self.bonds = _ctransformations.traverse_mol(
             self.sel,
-            ag.universe.bonds.to_indices(),
+            bond_ind,
             np.array([s.index for s in starters], dtype=int)
         )
         self.sel = ag.indices
@@ -56,16 +70,25 @@ class MolWrapper:
     Put centre of mass of molecules in selection to box
     parameters:
         ag:       Atom group of molecules to put in box
+        virts:    Boolean of whether to search manually for virtual sites and
+                  to connect them. Virtual sites are assumed to be any atom that
+                  is in a residue with more than one atom, but has no bonds. Bonds
+                  are added first to any non-virtual atom in the residue, or if not
+                  found, to any virtual atom.
     returns:
         transformation function
     """
 
-    def __init__(self, ag):
+    def __init__(self, ag, virts=False):
         self.selection = ag.indices
         self.weights = ag.masses.astype(ag.positions.dtype)
+        bond_ind = ag.universe.bonds.to_indices()
+        if (virts):
+            newbonds = _ctransformations(self.sel, bond_ind, ag.resindices)
+            bond_ind = np.concatenate(bond_ind, newbonds)
         self.mols, self.nmols = _ctransformations.find_frags(
             self.selection,
-            ag.universe.bonds.to_indices()
+            bond_ind
         )
 
         assert not np.any(np.array(self.mols) < 0), "FFuuuu, %d" % np.sum(
