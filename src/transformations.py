@@ -19,8 +19,8 @@ def make_whole(ts, bonds, sel):
 
 
 class Unwrapper:
-    """ Make molecules in ag whole over the pbc. only considers
-        continuosly bonded molecules, so if molecules are in many parts,
+    """ Make molecules in ag whole over the pbc. Only considers
+        continuously bonded molecules, so if molecules are in many parts,
         the nonbonded parts will be ignored and can be broken.
             Starters is a list (or atom group) of atoms to use as starting points.
         They will be put into the box if they are outside and each consecutive
@@ -28,9 +28,11 @@ class Unwrapper:
         length of the box.
             Virts can help with virtual sites, as MDAnalysis does not return their
         connections as bonds. A new bond is made to a random atom in the residue,
-        so as long as any single residue is not larger than half the bob vector in
-        any direction, this should work just fine. If it doesn't, you can manually
-        add bonds to each virtual site before calling this initialiser. 
+        so as long as virtual sites are within residues with real atoms and any 
+        single residue is not larger than half the box vector in any direction,
+        this should work just fine. If it doesn't, you can manually add bonds to
+        each virtual site before calling this initialiser, e.g. with the add_virt_bonds
+        function. 
         parameters:
             ag:       Atom group of molecules to make whole
             starters: Atom goup (or list) of atoms that are guaranteed to stay
@@ -40,7 +42,8 @@ class Unwrapper:
                       to connect them. Virtual sites are assumed to be any atom that
                       is in a residue with more than one atom, but has no bonds. Bonds
                       are added first to any non-virtual atom in the residue, or if not
-                      found, to any virtual atom.
+                      found, to any virtual atom. The bonds are not added to the original
+                      universe, only considered internally.
         returns:
             transformation function
     """
@@ -49,8 +52,13 @@ class Unwrapper:
         self.sel = ag.indices
         bond_ind = ag.universe.bonds.to_indices()
         if (virts):
-            newbonds = _ctransformations(self.sel, bond_ind, ag.resindices)
-            bond_ind = np.concatenate(bond_ind, newbonds)
+            newbonds = _ctransformations.bond_unbonded(
+                self.sel,
+                bond_ind,
+                ag.resindices
+            )
+            bond_ind = np.concatenate((bond_ind, newbonds))
+
         self.bonds = _ctransformations.traverse_mol(
             self.sel,
             bond_ind,
@@ -74,7 +82,8 @@ class MolWrapper:
                   to connect them. Virtual sites are assumed to be any atom that
                   is in a residue with more than one atom, but has no bonds. Bonds
                   are added first to any non-virtual atom in the residue, or if not
-                  found, to any virtual atom.
+                  found, to any virtual atom. This does not work for virtual sites
+                  that are between residues.
     returns:
         transformation function
     """
@@ -84,8 +93,12 @@ class MolWrapper:
         self.weights = ag.masses.astype(ag.positions.dtype)
         bond_ind = ag.universe.bonds.to_indices()
         if (virts):
-            newbonds = _ctransformations(self.sel, bond_ind, ag.resindices)
-            bond_ind = np.concatenate(bond_ind, newbonds)
+            newbonds = _ctransformations.bond_unbonded(
+                self.sel,
+                bond_ind,
+                ag.resindices
+            )
+            bond_ind = np.concatenate((bond_ind, newbonds))
         self.mols, self.nmols = _ctransformations.find_frags(
             self.selection,
             bond_ind
