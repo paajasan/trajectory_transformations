@@ -140,3 +140,41 @@ for ts in u.trajectory:
 In that case the positions can also be accessed before the transformation.
 
 All three transformations work with the same principle.
+
+
+### Virtual site handling ###
+
+These methods have been tested on a simple TIP4P system. They should in theory work with different systems, but further testing is still needed.
+
+As MDAnalysis does not add the connections of virtual sites to bonds, virtual sites are not connected to the rest of the molecule. Two methods are included to work around this.
+
+#### Guessing connections within residues ####
+
+If the virtual sites are all within residues and MDAnalysis correctly understands labels them, you can use the virts-option of the Unwrapper and Wrapper initialisers. It will guess virtual sites as atoms that are part of a residue with other atoms while having no bonds. Then it will connect these to any (effectively the first) non-virtual site within the same residue (if the residue is only made up of virtual sites, it will take one of them). As long as the virtual sites connect to the real atoms this way and any single residue is not larger than half the box length, this should work.
+
+The intialisation then simply becomes:
+
+```
+unwrap = Unwrapper(protein, virts=True)
+```
+
+The connections are only considered internally, and are not added to the universe object.
+
+#### Reading them straight from a topology ####
+
+The more robust option is to read the data from a topology file with [ParmEd](https://parmed.github.io/ParmEd/html/index.html). It is only an optional dependency and can be installed any time before or after this package. If it is not installed, and ImportError will be raised upon calling the function.
+
+This method should work with any system that ParmEd can handle, but it does add some overhead (in the order of a few seconds to tens of seconds depending on your system size) from reading the system in. If you work on many systems successively, this can end up being quite a lot of slower. You also need to have the topology file handy, though you can always make one from teh tpr file if you have gromacs, with `gmx dump`.
+
+You can import the function as
+
+```
+from trajectory_transformations import add_bonds
+```
+
+The initialisation then works (assuming you have the topology in `"topol.top"`) as
+
+```
+add_bonds(u, "topol.top")
+unwrap = Unwrapper(protein, virts=True)
+```
