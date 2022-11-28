@@ -74,7 +74,7 @@ def _matmul3D(floating[:,:] A, floating[:,:] B, bint modulo=False):
 
 @cython.boundscheck(False) # turn off bounds-checking for entire function
 @cython.wraparound(False)  # turn off negative index wrapping for entire function
-def bond_unbonded(np.intp_t[:] ag, int[:,:] bond_ind, int[:] resids):
+def bond_unbonded(np.intp_t[:] ag, int[:,:] bond_ind, np.intp_t[:] resids):
     """
     Finds atoms that are a part of an residue with other atoms, but do not have any bonds. Makes bonds to connects
     these to any non-virtual site within the residue.
@@ -83,7 +83,7 @@ def bond_unbonded(np.intp_t[:] ag, int[:,:] bond_ind, int[:] resids):
         bond_ind:   shape(nb,2) array of the nb existing bonds, including all bonds to and from the atom group.
         resids:     shape(n,) array of resids for each of the n atoms in the system.
     Returns:
-        newbonds:   shape(m,2) numpy array of new bonds, which connect unbonded atoms to any atom with the same resid.
+        newbonds:   shape(m,2) array of new bonds, which connect unbonded atoms to any atom with the same resid.
     """
     cdef cunmap[int,cvector[int]] residmap
     cdef cunset[int]              hasbonds
@@ -106,12 +106,12 @@ def bond_unbonded(np.intp_t[:] ag, int[:,:] bond_ind, int[:] resids):
         if(hasbonds.count(i)==0 and residmap[resids[i]].size()>1):
             virts.insert(i)
     
-    newbonds = np.empty((virts.size(),2),dtype=int)
+    newbonds = np.empty((virts.size(),2),dtype=np.int32)
 
     i=-1
     for v in virts:
         i+=1
-        for a in residmap[resids[i]]:
+        for a in residmap[resids[v]]:
             if(a==v):
                 # If this is the same atom, just continue
                 continue
