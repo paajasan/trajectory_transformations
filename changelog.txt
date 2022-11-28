@@ -1,0 +1,3 @@
+v0.0.2
+
+- Virtual site handling: two separate work-arounds for MDAnalysis ignoring virtual site connections.
