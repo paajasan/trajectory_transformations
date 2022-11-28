@@ -3,11 +3,45 @@
 import numpy as np
 from MDAnalysis.analysis import align
 
+try:
+    import parmed
+    pmd_imported = True
+
+except ImportError as e:
+    pmd_msg = e
+    pmd_imported = False
+
+
 from . import _ctransformations
 
 """
 This module includes functions to make on the fly transformations for MDAnalysis trajectories
 """
+
+
+def add_bonds(univ, topfile):
+    """
+    Add bonds to the universe by making a ParmEd structure from topfile and
+    adding all the bonds. No checking is performed between the universe and
+    ParmEd structure, so as long as all the indices are found in univ, new
+    bonds are made even if they make no sense in reality.
+
+    This can be used to add connections for virtual sites or to add bond info
+    into an mdanalysis universe that's missing them.
+
+    Parameters:
+        univ:       MDAnalysis universe to add the bonds to
+        topfile:    String or path to the topology file that parmed.load_file
+                    can read and get bonds from.
+    """
+    if (not pmd_imported):
+        raise ImportError("ParmEd has not be imported. Make sure it is installed\n"
+                          "Original message: {pmd_msg}")
+
+    pmd_struct = parmed.load_file(topfile)
+    bonds = [(b.atom1.idx, b.atom2.idx) for b in pmd_struct.bonds]
+
+    univ.add_bonds(bonds)
 
 
 def make_whole(ts, bonds, sel):
