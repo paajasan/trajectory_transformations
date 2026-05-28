@@ -9,6 +9,12 @@
 
 The project has two version of the same tools. The numba-accelerated one is a bit slower in iteration and a lot slower in setup than the cython accelerated one, but does not need to be built. If you plan on transforming whole systems (inluding all waters), I seriously suggest using the cython version. With small proteins without hydrogens the differences less noticeable.
 
+The numba version does not currently have all features, like precentering.
+
+### precenter ####
+
+Move the selection such that a single atom is in the centre. Optionally includes uncenter to move the selections back after the other operations.
+
 ### unwrap ####
 
 Makes "fragments" whole over the PBC. Fragments are groups of bonded atoms in the selection. If the molecules are continuous in the selection, these are the same as molecules.
@@ -28,6 +34,12 @@ The built-in unwrap method was super slow. With one system the built-in method t
 **Note**: there is a [pull request](https://github.com/MDAnalysis/mdanalysis/pull/3169#issue-831915405) for MDAnaysis, that should make its transformations faster by many orders of magnitude. This project will most likely still be faster for large systems, but of course by a smaller margin than currently.
 
 ## How? ###
+
+### precentering/uncentering ####
+
+The setup only saves the starting atom if given or finds the atom in ag closest to the box centre. When running the precentering moves all atoms in ag (or subselection if given) such that the centering atom is at box centre. Calling the uncenter method after this undoes moves all atoms back by the same amount.
+
+Subselection is only useful when the centering atom is not given and you want to move a different selection than the one that should be used to find the centremost atom.
 
 
 ### unwrap ####
@@ -91,7 +103,7 @@ pip uninstall trajectory_transformations
 
 The transformations can then be imported with
 ```
-from trajectory_transformations import Unwrapper, Wrapper, Superpos
+from trajectory_transformations import Unwrapper, Wrapper, Superpos, Precenter
 ```
 
 
@@ -139,8 +151,16 @@ for ts in u.trajectory:
 
 In that case the positions can also be accessed before the transformation.
 
-All three transformations work with the same principle.
+All four transformations work with the same principle. Uncentering is the only one that works differently as it is a method of precentering. To make protein molecules whole and clustered around an atom initially in the centre you can do
 
+```
+precenter = Precenter(protein)
+unwrap = Unwrapper(protein)
+molwrap = MolWrapper(protein)
+
+u.trajectory.add_transformations(precenter, unwrap, molwrap, precenter.uncenter)
+```
+This will first move the proteins for each frame such that the initially centremost atom is again in the centre. Then it make molecules whole and moves them back into the box if outside. Finally it moves the proteins back to where they were intially, but guaranteed whole and clustered around the centremost atom.
 
 ### Virtual site handling ###
 
@@ -164,7 +184,7 @@ The connections are only considered internally, and are not added to the univers
 
 The more robust option is to read the data from a topology file with [ParmEd](https://parmed.github.io/ParmEd/html/index.html). It is only an optional dependency and can be installed any time before or after this package. If it is not installed, and ImportError will be raised upon calling the function.
 
-This method should work with any system that ParmEd can handle, but it does add some overhead (in the order of a few seconds to tens of seconds depending on your system size) from reading the system in. If you work on many systems successively, this can end up being quite a lot of slower. You also need to have the topology file handy, though you can always make one from teh tpr file if you have gromacs, with `gmx dump`.
+This method should work with any system that ParmEd can handle, but it does add some overhead (in the order of a few seconds to tens of seconds depending on your system size) from reading the system in. If you work on many systems successively, this can end up being quite a lot of slower. You also need to have the topology file handy, though you can always make one from the tpr file if you have gromacs, with `gmx dump`.
 
 You can import the function as
 
