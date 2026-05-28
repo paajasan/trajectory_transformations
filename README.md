@@ -92,9 +92,9 @@ conda activate myTransformEnv
 
 The actual command to build and install the project is simply
 ```
-pip install .
+pip install trajectory_transformations
 ```
-which of course has to be run in the project folder. This will take care of any buld-time dependencies (like cython) even if you do not have them installed. If you want to update the tool, you can simply rerun the command with the new version. To uninstall the tool run
+This will take care of any buld-time dependencies (like cython) even if you do not have them installed. To uninstall the tool run
 
 ```
 pip uninstall trajectory_transformations
