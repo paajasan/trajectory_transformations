@@ -181,6 +181,7 @@ class MolWrapper:
             self.selection,
             bond_ind
         )
+        self.__setup_run = True
 
         del self.ag
         del self._virts
